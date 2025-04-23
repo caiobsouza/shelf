@@ -11,14 +11,21 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as AboutImport } from './routes/about'
+import { Route as LoginImport } from './routes/login'
+import { Route as ProtectedImport } from './routes/_protected'
 import { Route as IndexImport } from './routes/index'
+import { Route as ProtectedBooksImport } from './routes/_protected/books'
 
 // Create/Update Routes
 
-const AboutRoute = AboutImport.update({
-  id: '/about',
-  path: '/about',
+const LoginRoute = LoginImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ProtectedRoute = ProtectedImport.update({
+  id: '/_protected',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -26,6 +33,12 @@ const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const ProtectedBooksRoute = ProtectedBooksImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -39,51 +52,85 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutImport
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedImport
       parentRoute: typeof rootRoute
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/_protected/books': {
+      id: '/_protected/books'
+      path: '/books'
+      fullPath: '/books'
+      preLoaderRoute: typeof ProtectedBooksImport
+      parentRoute: typeof ProtectedImport
     }
   }
 }
 
 // Create and export the route tree
 
+interface ProtectedRouteChildren {
+  ProtectedBooksRoute: typeof ProtectedBooksRoute
+}
+
+const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedBooksRoute: ProtectedBooksRoute,
+}
+
+const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
+  ProtectedRouteChildren,
+)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '': typeof ProtectedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/books': typeof ProtectedBooksRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '': typeof ProtectedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/books': typeof ProtectedBooksRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/_protected': typeof ProtectedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_protected/books': typeof ProtectedBooksRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '' | '/login' | '/books'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '' | '/login' | '/books'
+  id: '__root__' | '/' | '/_protected' | '/login' | '/_protected/books'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  ProtectedRoute: typeof ProtectedRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  ProtectedRoute: ProtectedRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 
 export const routeTree = rootRoute
@@ -97,14 +144,25 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/about"
+        "/_protected",
+        "/login"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/about": {
-      "filePath": "about.tsx"
+    "/_protected": {
+      "filePath": "_protected.tsx",
+      "children": [
+        "/_protected/books"
+      ]
+    },
+    "/login": {
+      "filePath": "login.tsx"
+    },
+    "/_protected/books": {
+      "filePath": "_protected/books.tsx",
+      "parent": "/_protected"
     }
   }
 }
